@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  discordId String   @unique
+  cards     UserCard[]
+}
+
+model Card {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique
+  imageUrl String
+  anime    String
+  users    UserCard[]
+}
+
+model UserCard {
+  id      Int   @id @default(autoincrement())
+  user    User  @relation(fields: [userId], references: [id])
+  userId  Int
+  card    Card  @relation(fields: [cardId], references: [id])
+  cardId  Int
+  dropId  Int?
+  code    String? @unique // codice univoco di 6 caratteri
+}
+
+model CardDropCount {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  count Int    @default(0)
+}
