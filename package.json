@@ -1,5 +1,5 @@
 {
-  "name": "aladia",
+  "name": "discordbot",
   "version": "1.0.0",
   "description": "Un bot per discord",
   "license": "ISC",
@@ -9,13 +9,11 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "build": "tsup src/index.ts src/scripts/import-new-cards.ts --minify",
+    "build": "tsup src/index.ts --minify",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy:commands": "tsx src/deploy-commands.ts",
-    "import-new-cards": "node dist/scripts/import-new-cards.js"
+    "deploy:commands": "tsx src/deploy-commands.ts"
   },
   "dependencies": {
-    "@flydotio/litestream": "^1.0.1",
     "@prisma/client": "^6.12.0",
     "canvas": "^3.1.2",
     "discord.js": "^14.21.0",
@@ -24,12 +22,8 @@
     "prisma": "^6.12.0"
   },
   "devDependencies": {
-    "@flydotio/dockerfile": "^0.7.10",
     "tsup": "^8.5.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
-  },
-  "dockerfile": {
-    "litestream": true
   }
 }
