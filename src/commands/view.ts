@@ -15,11 +15,11 @@ export async function execute(interaction: any) {
   const code = interaction.options.getString("codice");
   const userCard = await prisma.userCard.findFirst({ where: { code } });
   if (!userCard) {
-    return interaction.reply({ content: "❌ Codice non trovato.", ephemeral: true });
+    return interaction.reply({ content: "❌ Codice non trovato.", flags: 1 << 6 });
   }
   const card = await prisma.card.findUnique({ where: { id: userCard.cardId } });
   if (!card) {
-    return interaction.reply({ content: "❌ Carta non trovata.", ephemeral: true });
+    return interaction.reply({ content: "❌ Carta non trovata.", flags: 1 << 6 });
   }
   // Crea l'immagine singola con combineImages
   const buffer = await combineImages([

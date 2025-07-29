@@ -1,5 +1,7 @@
-import { createCanvas, loadImage, registerFont } from "canvas";
+
+import { createCanvas, loadImage, registerFont, Image } from "canvas";
 import path from "path";
+import fetch from "node-fetch";
 
 // Puoi aggiungere un font personalizzato se vuoi uno stile anime
 // registerFont(path.resolve(__dirname, "../assets/yourfont.ttf"), { family: "AnimeFont" });
@@ -20,11 +22,42 @@ export async function combineImages(cards: { imageUrl: string; name: string; ani
   ctx.textAlign = "center";
   ctx.fillStyle = "#222";
 
+
+  // Placeholder compatibile con Image
+  const phCanvas = createCanvas(width, height);
+  const phCtx = phCanvas.getContext("2d");
+  phCtx.fillStyle = "#eee";
+  phCtx.fillRect(0, 0, width, height);
+  phCtx.font = "bold 20px Arial";
+  phCtx.fillStyle = "#888";
+  phCtx.textAlign = "center";
+  phCtx.fillText("NO IMG", width / 2, height / 2);
+  const placeholder = await loadImage(phCanvas.toBuffer());
+
   for (let i = 0; i < cardCount; i++) {
     const card = cards[i];
     if (!card) continue;
     const { imageUrl, name, anime, id } = card;
-    const img = await loadImage(imageUrl);
+    let img: Image;
+    try {
+      // Scarica l'immagine da URL esterno con User-Agent
+      if (imageUrl.startsWith("http")) {
+        const res = await fetch(imageUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          }
+        });
+        if (!res.ok) throw new Error(`Impossibile scaricare ${imageUrl}`);
+        const arrayBuffer = await res.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        img = await loadImage(buffer);
+      } else {
+        img = await loadImage(imageUrl);
+      }
+    } catch (err) {
+      console.error(`Errore caricamento immagine ${imageUrl}:`, err);
+      img = placeholder;
+    }
     const x = marginX + i * (width + marginX);
     const y = marginY;
 
@@ -39,8 +72,9 @@ export async function combineImages(cards: { imageUrl: string; name: string; ani
     ctx.drawImage(frame, x, y, width, height);
 
     // Nome centrato nella parte bianca in alto
-    ctx.font = "bold 22px Arial";
-    ctx.fillText(name, x + width / 2, y + 60);
+    ctx.font = "bold 18px Arial";
+    ctx.fillText(name, x + width / 2, y + 55);
+
     // Anime centrato nella parte bianca in basso
     ctx.font = "bold 20px Arial";
     ctx.fillText(anime, x + width / 2, y + height - 50);

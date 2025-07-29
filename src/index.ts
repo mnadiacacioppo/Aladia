@@ -25,63 +25,78 @@ client.once(Events.ClientReady, () => {
 client.on(Events.InteractionCreate, async (interaction) => {
   // Gestione bottoni
   if (interaction.isButton()) {
-    const [action, idx, cardName, dropIdStr] = interaction.customId.split("_");
-    if (action !== "claim") return;
-    const dropId = dropIdStr ? parseInt(dropIdStr) : undefined;
+    const [action, type, ...params] = interaction.customId.split("_");
 
-    const user = await prisma.user.upsert({
-      where: { discordId: interaction.user.id },
-      update: {},
-      create: { discordId: interaction.user.id },
-    });
+    // Paginazione comando list
+    if (action === "list" && (type === "prev" || type === "next")) {
+      // Estraggo i parametri
+      const page = parseInt(params[0]);
+      const animeFilter = params[1] || null;
+      const nameFilter = params[2] || null;
 
-    // Cerca la carta nel database, se non esiste la crea
-    let card = await prisma.card.findFirst({
-      where: { name: cardName },
-    });
-    if (!card) {
-      const cardData = cards.find((c) => c.name === cardName);
-      card = await prisma.card.create({
-        data: {
-          name: cardName,
-          imageUrl: cardData?.imageUrl || "",
-          anime: cardData?.anime || "?",
+      // Eseguo la funzione del comando list
+      const { execute } = require("./commands/list");
+      // Creo un oggetto options simulato
+      const fakeOptions = {
+        getString: (key: string) => {
+          if (key === "anime") return animeFilter && animeFilter !== "" ? animeFilter : null;
+          if (key === "name") return nameFilter && nameFilter !== "" ? nameFilter : null;
+          return null;
         },
+        getInteger: (key: string) => {
+          if (key === "page") return page;
+          return null;
+        }
+      };
+      // Passo options simulato e forzo update
+      await execute({
+        ...interaction,
+        options: fakeOptions,
+        replied: true,
+        deferred: false,
+        update: interaction.update.bind(interaction)
       });
+      return;
     }
 
-    // Genera codice univoco di 6 caratteri (numeri e lettere)
-    function generateCode(length = 6) {
-      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-      let code = '';
-      for (let i = 0; i < length; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    // Visualizzazione carta tramite lente
+    if (action === "view" && type === "card") {
+      const cardId = parseInt(params[0]);
+      const card = await prisma.card.findUnique({ where: { id: cardId } });
+      if (!card) {
+        return interaction.reply({ content: "❌ Carta non trovata.", flags: 1 << 6 });
       }
-      return code;
+      const { combineImages } = await import("./utils/combineImages");
+      const { AttachmentBuilder } = await import("discord.js");
+      try {
+        const buffer = await combineImages([
+          {
+            imageUrl: card.imageUrl,
+            name: card.name,
+            anime: card.anime,
+            id: 1,
+          }
+        ], 230, 360);
+        const attachment = new AttachmentBuilder(buffer, { name: "card.png" });
+        await interaction.reply({
+          content: `🎴 **${card.name}** - ${card.anime}`,
+          files: [attachment],
+          flags: 1 << 6
+        });
+      } catch (error) {
+        console.error("Errore nella creazione dell'immagine:", error);
+        await interaction.reply({
+          content: `🎴 **${card.name}** - ${card.anime}\n\n*Anteprima immagine non disponibile*`,
+          flags: 1 << 6
+        });
+      }
+      return;
     }
 
-    let code;
-    let exists = true;
-    // Assicurati che il codice sia unico
-    do {
-      code = generateCode();
-      exists = !!(await prisma.userCard.findFirst({ where: { code } }));
-    } while (exists);
-
-    await prisma.userCard.create({
-      data: {
-        userId: user.id,
-        cardId: card.id,
-        dropId: dropId,
-        code: code,
-      },
-    });
-
-    await interaction.update({
-      content: `🎉 ${interaction.user.username} ha claimato **${cardName}**!`,
-      components: [],
-    });
-    return;
+    // ...gestione claim e altri bottoni...
+    if (action === "claim") {
+      // ...existing code...
+    }
   }
 
   // Gestione slash command
@@ -95,7 +110,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.reply({
         content:
           "Si è verificato un errore durante l'esecuzione del comando.",
-        ephemeral: true,
+        flags: 1 << 6,
       });
     }
   }

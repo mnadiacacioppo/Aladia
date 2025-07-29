@@ -3,6 +3,7 @@ import * as ping from "./ping";
 import * as inventory from "./inventory";
 import * as drop from "./drop";
 import * as view from "./view";
+import * as list from "./list";
 
 interface Command {
   data: any;
@@ -14,4 +15,5 @@ export const commands: Record<string, Command> = {
   inventory,
   drop,
   view,
+  list,
 };
