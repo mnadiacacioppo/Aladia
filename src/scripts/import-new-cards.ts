@@ -1,3 +1,4 @@
+
 import prisma from "../lib/prisma";
 import cards from "../data/cards.json";
 
@@ -12,18 +13,16 @@ async function main() {
         data: {
           name: card.name,
           imageUrl: card.imageUrl,
-          anime: card.anime,
         },
       });
       added++;
       justAdded.push(card.name);
     } else {
-      // Aggiorna imageUrl e anime se sono cambiati
+      // Aggiorna solo imageUrl
       await prisma.card.update({
         where: { name: card.name },
         data: {
           imageUrl: card.imageUrl,
-          anime: card.anime,
         },
       });
       alreadyPresent.push(card.name);

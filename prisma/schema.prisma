@@ -23,7 +23,6 @@ model Card {
   id       Int      @id @default(autoincrement())
   name     String   @unique
   imageUrl String
-  anime    String
   users    UserCard[]
 }
 

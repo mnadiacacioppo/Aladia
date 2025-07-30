@@ -26,7 +26,6 @@ export async function execute(interaction: any) {
     {
       imageUrl: card.imageUrl,
       name: card.name,
-      anime: card.anime,
       id: userCard.dropId ?? 1,
     }
   ], 230, 360);

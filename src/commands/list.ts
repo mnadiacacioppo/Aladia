@@ -7,27 +7,18 @@ export const data = new SlashCommandBuilder()
   .setName("list")
   .setDescription("Mostra tutti i personaggi disponibili nel database")
   .addStringOption(option =>
-    option.setName("anime")
-      .setDescription("Filtra per anime specifico")
-      .setRequired(false)
-  )
-  .addStringOption(option =>
     option.setName("name")
       .setDescription("Filtra per nome del personaggio")
       .setRequired(false)
   );
 
 export async function execute(interaction: any) {
-  const animeFilter = interaction.options.getString("anime") || null;
   const nameFilter = interaction.options.getString("name") || null;
   const page = interaction.options.getInteger("page") || 1;
   const pageSize = 10;
 
   // Costruisci filtro
   const where: any = {};
-  if (animeFilter) {
-    where.anime = { contains: animeFilter };
-  }
   if (nameFilter) {
     where.name = { contains: nameFilter };
   }
@@ -38,7 +29,6 @@ export async function execute(interaction: any) {
   const cards = await prisma.card.findMany({
     where,
     orderBy: [
-      { anime: 'asc' },
       { name: 'asc' }
     ],
     skip: (page - 1) * pageSize,
@@ -49,13 +39,14 @@ export async function execute(interaction: any) {
     return interaction.reply({ content: "❌ Nessun personaggio trovato.", flags: 1 << 6 });
   }
 
-  // Raggruppa per anime
-  const animeGroups: Record<string, typeof cards> = {};
+  // Raggruppa per nome
+  const nameGroups: Record<string, typeof cards> = {};
   cards.forEach(card => {
-    if (!animeGroups[card.anime]) {
-      animeGroups[card.anime] = [];
+    const firstLetter = card.name[0].toUpperCase();
+    if (!nameGroups[firstLetter]) {
+      nameGroups[firstLetter] = [];
     }
-    animeGroups[card.anime].push(card);
+    nameGroups[firstLetter].push(card);
   });
 
   // Crea l'embed principale
@@ -65,18 +56,17 @@ export async function execute(interaction: any) {
     .setTimestamp();
 
   let descrizione = `Totale personaggi trovati: **${total}**\n`;
-  if (animeFilter) descrizione += `Filtrati per anime: **${animeFilter}**\n`;
   if (nameFilter) descrizione += `Filtrati per nome: **${nameFilter}**\n`;
   descrizione += `Pagina **${page}** di **${Math.ceil(total / pageSize)}**`;
   embed.setDescription(descrizione);
 
-  // Mostra la lista con la lente accanto
-  Object.entries(animeGroups).forEach(([anime, animeCards]) => {
-    const characterList = animeCards
+  // Mostra la lista con la lente accanto, raggruppata per lettera iniziale
+  Object.entries(nameGroups).forEach(([letter, letterCards]) => {
+    const characterList = letterCards
       .map(card => `• ${card.name} [🔍](button:view_card_${card.id})`)
       .join('\n');
     embed.addFields({
-      name: `${anime} (${animeCards.length})`,
+      name: `${letter} (${letterCards.length})`,
       value: characterList,
       inline: false
     });
@@ -87,7 +77,7 @@ export async function execute(interaction: any) {
   if (page > 1) {
     navRow.addComponents(
       new ButtonBuilder()
-        .setCustomId(`list_prev_${page - 1}_${animeFilter || ""}_${nameFilter || ""}`)
+        .setCustomId(`list_prev_${page - 1}_${nameFilter || ""}`)
         .setLabel("⬅️ Pagina precedente")
         .setStyle(ButtonStyle.Primary)
     );
@@ -95,7 +85,7 @@ export async function execute(interaction: any) {
   if (page < Math.ceil(total / pageSize)) {
     navRow.addComponents(
       new ButtonBuilder()
-        .setCustomId(`list_next_${page + 1}_${animeFilter || ""}_${nameFilter || ""}`)
+        .setCustomId(`list_next_${page + 1}_${nameFilter || ""}`)
         .setLabel("➡️ Pagina successiva")
         .setStyle(ButtonStyle.Primary)
     );

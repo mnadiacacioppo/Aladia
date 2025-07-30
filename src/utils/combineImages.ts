@@ -6,7 +6,7 @@ import fetch from "node-fetch";
 // Puoi aggiungere un font personalizzato se vuoi uno stile anime
 // registerFont(path.resolve(__dirname, "../assets/yourfont.ttf"), { family: "AnimeFont" });
 
-export async function combineImages(cards: { imageUrl: string; name: string; anime: string; id: number }[], width = 230, height = 360) {
+export async function combineImages(cards: { imageUrl: string; name: string; id: number }[], width = 230, height = 360) {
   const marginX = 50;
   const marginY = 40;
   const cardCount = cards.length;
@@ -37,7 +37,7 @@ export async function combineImages(cards: { imageUrl: string; name: string; ani
   for (let i = 0; i < cardCount; i++) {
     const card = cards[i];
     if (!card) continue;
-    const { imageUrl, name, anime, id } = card;
+    const { imageUrl, name, id } = card;
     let img: Image;
     try {
       // Scarica l'immagine da URL esterno con User-Agent
@@ -74,10 +74,6 @@ export async function combineImages(cards: { imageUrl: string; name: string; ani
     // Nome centrato nella parte bianca in alto
     ctx.font = "bold 18px Arial";
     ctx.fillText(name, x + width / 2, y + 55);
-
-    // Anime centrato nella parte bianca in basso
-    ctx.font = "bold 20px Arial";
-    ctx.fillText(anime, x + width / 2, y + height - 50);
 
     // ID carta in basso a destra nel rettangolo
     ctx.font = "bold 10px Arial";

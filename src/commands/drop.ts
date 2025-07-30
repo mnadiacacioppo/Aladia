@@ -40,7 +40,7 @@ export async function execute(interaction: any) {
   }
 
   // Calcola l'id progressivo globale per ogni carta usando il database
-  const carteConAnime = [];
+  const carteDrop = [];
   for (const c of carteScelte) {
     // Trova o crea il contatore per la carta
     let dropCount = await prisma.cardDropCount.findUnique({ where: { name: c.name } });
@@ -49,10 +49,9 @@ export async function execute(interaction: any) {
     } else {
       dropCount = await prisma.cardDropCount.update({ where: { name: c.name }, data: { count: dropCount.count + 1 } });
     }
-    carteConAnime.push({
+    carteDrop.push({
       imageUrl: c.imageUrl,
       name: c.name,
-      anime: c.anime,
       id: dropCount.count,
     });
   }
@@ -61,7 +60,7 @@ export async function execute(interaction: any) {
   await interaction.deferReply();
 
   // Unisci le immagini delle 3 carte in una sola
-  const combinedBuffer = await combineImages(carteConAnime);
+  const combinedBuffer = await combineImages(carteDrop);
   const attachment = new AttachmentBuilder(combinedBuffer, { name: "cards.png" });
 
   // Crea un embed unico con l'immagine combinata
@@ -70,7 +69,7 @@ export async function execute(interaction: any) {
     .setImage("attachment://cards.png");
 
   // Crea 3 bottoni, uno per ogni carta, includendo il dropId
-  const buttons = carteConAnime.map((card, i) =>
+  const buttons = carteDrop.map((card, i) =>
     new ButtonBuilder()
       .setCustomId(`claim_${i}_${card.name}_${card.id}`)
       .setLabel(`${i + 1}`)

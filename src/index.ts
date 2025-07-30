@@ -31,7 +31,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (action === "list" && (type === "prev" || type === "next")) {
       // Estraggo i parametri
       const page = parseInt(params[0]);
-      const animeFilter = params[1] || null;
       const nameFilter = params[2] || null;
 
       // Eseguo la funzione del comando list
@@ -39,7 +38,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       // Creo un oggetto options simulato
       const fakeOptions = {
         getString: (key: string) => {
-          if (key === "anime") return animeFilter && animeFilter !== "" ? animeFilter : null;
           if (key === "name") return nameFilter && nameFilter !== "" ? nameFilter : null;
           return null;
         },
@@ -73,20 +71,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
           {
             imageUrl: card.imageUrl,
             name: card.name,
-            anime: card.anime,
             id: 1,
           }
         ], 230, 360);
         const attachment = new AttachmentBuilder(buffer, { name: "card.png" });
         await interaction.reply({
-          content: `🎴 **${card.name}** - ${card.anime}`,
+          content: `🎴 **${card.name}**`,
           files: [attachment],
           flags: 1 << 6
         });
       } catch (error) {
         console.error("Errore nella creazione dell'immagine:", error);
         await interaction.reply({
-          content: `🎴 **${card.name}** - ${card.anime}\n\n*Anteprima immagine non disponibile*`,
+          content: `🎴 **${card.name}**\n\n*Anteprima immagine non disponibile*`,
           flags: 1 << 6
         });
       }

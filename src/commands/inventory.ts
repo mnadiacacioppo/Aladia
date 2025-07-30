@@ -20,10 +20,10 @@ export async function execute(interaction: any) {
   const lista = await Promise.all(user.cards.map(async (uc: any) => {
     const card = await prisma.card.findUnique({
       where: { id: uc.cardId },
-      select: { name: true, anime: true }
+      select: { name: true }
     });
     if (!card) return "";
-    return `• ${uc.code ?? "------"} | #${uc.dropId ?? "?"} - ${card.name} - ${card.anime}`;
+    return `• ${uc.code ?? "------"} | #${uc.dropId ?? "?"} - ${card.name}`;
   }));
   await interaction.reply(`📦 Ecco le tue carte:\n${lista.filter(Boolean).join("\n")}`);
 }
